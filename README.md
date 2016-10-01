@@ -13,7 +13,7 @@ Architecture:
   * dashboard.html
      - Will consume processed data in order to display the analysis
      
-  summary of the pipe architecture:
-  twitter listener >> DB >> twitter analyser >> front
+ summary of the pipe architecture:
+ twitter listener >> DB >> twitter analyser >> front
 
 In this file I will keep track of failures and architectural changes
