@@ -1,49 +1,50 @@
 import sqlite3 as sql
 import pandas as pd
-#import time
-from collections import Counter
-from operator import itemgetter
 from datetime import datetime
+import peak_detection as peak
 
 
-def to_local_time(tweet_created_at):
-
+def set_datetime_format(tweet_created_at):
     format = '%a %b %d %H:%M:%S %z %Y'
     return datetime.strptime(tweet_created_at, format)
 
 
-conn = sql.connect('./twitter_streaming_data.db')
-proc_data = conn.execute("""select * from tweets""")
+class TweetAggregation:
+    """
+    Class that handle with data aspects from tweets
+     - Connects with database
+     - Aggregates over time_frame
+     - Calls peak_detection
+    """
 
-cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
-tweets = pd.DataFrame.from_records(data = proc_data.fetchall(), columns = cols)
-conn.close()
+    def __init__(self):
+        self.conn = sql.connect('./twitter_streaming_data.db')
 
-tweets['agg_created_at'] = tweets['created_at'].map(lambda x: to_local_time(x))
+    def time_frame_evaluation(self, time_frame="1Min"):
+        """
+        function that connects to the tweet table from twitter_streaming_data.db
+         and aggregates over time_frame
 
-# hashtag frequency sorted from most frequent to less
-# hashtags_occurrence = tweets.groupby('hashtag').agg(["count"])["id"].sort_values(["count"], ascending=False)
+        """
 
-# group by hashtag
-hashtags_groups = tweets.groupby('hashtag')
+        # Connect to the tweets database
+        query = "select * from tweets"
+        with self.conn:
+            proc_data = self.conn.execute(query)
+            cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
+            tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
 
-# treat each hashtag group
-for id_group, group in hashtags_groups:
-    count = len(group)
+        # Handle with twitter date format
+        tweets['agg_created_at'] = tweets['created_at'].map(lambda x: set_datetime_format(x))
+        tweets = tweets.set_index(['agg_created_at'])
 
-    # check if hashtag is significant
-    if count > 1000:
-        hashtag_agg_timeframe = group.groupby(to_local_time)
+        for hashtag, hashtag_tweets in tweets.groupby('hashtag'):
+            # We will find spikes in the time series
+            # Group datetime in the given timeframe - Change per minute
+            qt_tweets = hashtag_tweets.tweet_id.resample(time_frame).count()
+            peak.peak_detection(hashtag, hashtag_tweets)
 
 
-# I will analise the most frequent here
-hashtag_created_at = tweets[tweets["hashtag"] == "Obama"]["created_at"]
-
-# Convert into python datetime
-hashtag_created_at = [str(to_local_time(x)) for x in hashtag_created_at]
-# Group tweets and organizer cronologically
-# @ In the Counter, x should be handle in fuction of the specified timeframe
-hashtag_frequency = sorted(Counter([x[:15] for x in hashtag_created_at]).items())
-
-# Now, we have to analyse hashtag_frequency in order to find the spikes
-print(hashtag_frequency)
+if __name__ == '__main__':
+    table = TweetAggregation()
+    table.time_frame_evaluation(time_frame='1min')

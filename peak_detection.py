@@ -1,16 +1,28 @@
 import unittest
 from unittest import TestCase
-
 from pandas import Series
+import numpy as np
+from scipy.stats import norm
 
 
-def peak_detection(count_series):
+def peak_detection(hashtag, count_series):
     """
     function to detect peaks of a certain hashtag
 
     :type count_series: pd.Series
     :return: dictionary with timestamps and counts of peaks
     """
+
+    qt_tweets = count_series.tweet_id.resample('1min').count()
+    mu, std = norm.fit(qt_tweets)
+    print(hashtag, " - ", mu, std)
+    print(qt_tweets)
+    count, division = np.histogram(qt_tweets)
+    print(count, division)
+
+
+
+
 
     return {'2015.03': 4777, '2016.04': 534}
 
