@@ -4,6 +4,10 @@ from pandas import Series
 import numpy as np
 from scipy.stats import norm
 
+def probability_calc(mu, std, frequency):
+
+
+
 
 def peak_detection(hashtag, count_series):
     """
@@ -13,12 +17,13 @@ def peak_detection(hashtag, count_series):
     :return: dictionary with timestamps and counts of peaks
     """
 
-    qt_tweets = count_series.tweet_id.resample('1min').count()
-    mu, std = norm.fit(qt_tweets)
+
+    mu, std = norm.fit(count_series)
     print(hashtag, " - ", mu, std)
-    print(qt_tweets)
-    count, division = np.histogram(qt_tweets)
+    print(count_series)
+    count, division = np.histogram(count_series)
     print(count, division)
+
 
 
 

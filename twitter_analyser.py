@@ -42,7 +42,7 @@ class TweetAggregation:
             # We will find spikes in the time series
             # Group datetime in the given timeframe - Change per minute
             qt_tweets = hashtag_tweets.tweet_id.resample(time_frame).count()
-            peak.peak_detection(hashtag, hashtag_tweets)
+            peak.peak_detection(hashtag, qt_tweets)
 
 
 if __name__ == '__main__':
