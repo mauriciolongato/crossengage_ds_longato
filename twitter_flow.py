@@ -3,7 +3,7 @@ from tweepy import OAuthHandler
 from tweepy import Stream
 import json
 import sqlite3 as sql
-import time
+from datetime import datetime
 import logging
 import sys
 
@@ -13,7 +13,6 @@ logging.basicConfig(filename='log/twitter_flow.txt', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
 #logger.addHandler(handler)
-
 
 class StdoutListener(StreamListener):
     """
@@ -26,27 +25,18 @@ class StdoutListener(StreamListener):
 
     def on_data(self, data):
         try:
-            # Loads json and parsing data
+            # Loads twitter's json data into a data base
             received_tweet = json.loads(data)
-
-            # get tweet id
             tweet_id = received_tweet["id"]
-
-            # get twitter posting date
             created_at = received_tweet["created_at"]
-
-            # list all hashtags from that tweet
             tweet_hashtags = [x["text"] for x in received_tweet["entities"]["hashtags"]]
 
             # Start to populate tweet table
-            # because some tweets has more the one hashtag
-            # print(tweet_hashtags)
             infos = []
             for hashtag in tweet_hashtags:
+
                 logger.debug('Found hashtag %s', hashtag)
-                # Here we are inserting twitter's information in our database
-                tweet_info = [tweet_id, str(time.strftime("%d/%m/%Y %H:%M:%S")), created_at, hashtag]
-                # print(tweet_info)
+                tweet_info = [tweet_id, str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")), created_at, hashtag]
                 infos.append(tweet_info)
 
             query = """insert into tweets(tweet_id, insert_date, created_at, hashtag) values(?, ?, ?, ?);"""
@@ -56,13 +46,11 @@ class StdoutListener(StreamListener):
             return True
 
         except Exception as e:
-            # Create a log of the error and the lost twitter
-            # set a log
+
             logger.exception(e)
-            print("deu ruim")
 
     def on_error(self, status):
-        print(status)
+        logger.debug('on_error %s', status)
 
 
 if __name__ == '__main__':
@@ -85,4 +73,4 @@ if __name__ == '__main__':
     logger.info('Beginning streaming')
     # Start data stream
     stream = Stream(auth, l)
-    stream.filter(track=['Empire'], languages=['en'])
+    stream.filter(track=['SundayMorning'], languages=['en'])
