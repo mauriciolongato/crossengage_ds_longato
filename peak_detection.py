@@ -1,12 +1,7 @@
-import unittest
-from unittest import TestCase
-from pandas import Series
-from scipy.stats import norm
 import scipy.stats
-import logging
-from datetime import datetime
-import sys
 import sqlite3 as sql
+import logging
+import sys
 
 
 # Set log config
@@ -32,13 +27,13 @@ logger.addHandler(ch)
 
 def probability_calc(mu, std, frequency):
     """
-    Function that evaluates probability of a given frequecy considering a
+    Function that evaluates probability of a given frequency considering a
     normal distribution
 
     :param mu: Average of qt_tweet/time frame
-    :param std: Standard Seviation
-    :param frequency: Pandas DataFrame
-    :return: DataFrame containing the probability of each frequency
+    :param std: Standard Deviation
+    :param frequency: frequency of tweets///
+    :return: probability of the frequency
     """
     return 1-scipy.stats.norm(mu, std).cdf(frequency)
 
@@ -46,21 +41,22 @@ def probability_calc(mu, std, frequency):
 def peak_detection(hashtag, count_series, time_window, time_frame, sensibility = 0.98, freq_lim = 0.08):
     """
     function to detect peaks of a certain hashtag
-    peak will be difined as:
-        - Probability of occurence of a gave frequency <= sensibility
-        - Will be evaluate peaks in data series that has a tweet frequency grater than "freq_lim"
+    peak will be defined as:
+        - Probability of occurrence of a given frequency <= sensibility
+        - Will evaluate peaks in a data series that has tweet frequency greater than freq_lim
           (tweet frequency = tweets per second)
 
     :type count_series: pd.Series
     """
-    # Calculate the occurence's probability of a given frequency - Using normal distribution
-    (mu, std) = norm.fit(count_series)
-    frequencies = count_series.to_frame()
-    frequencies['probability'] = frequencies['tweet_id'].apply(lambda x: probability_calc(mu, std, x))
 
     # Evaluates the peaks considering tweets/s of a given hashtag and the probability of a frequency
     tweet_frequency = float(count_series.sum())/time_window
     if tweet_frequency >= freq_lim:
+
+        # Calculate the occurrence's probability of a given frequency - Using normal distribution
+        (mu, std) = scipy.stats.norm.fit(count_series)
+        frequencies = count_series.to_frame()
+        frequencies['probability'] = frequencies['tweet_id'].apply(lambda x: probability_calc(mu, std, x))
 
         logger.debug('Hashtag candidate to have a peak: %s - %s tweets/s', hashtag, tweet_frequency)
         peaks = frequencies[frequencies['probability'] <= (1-sensibility)]
@@ -95,24 +91,3 @@ def peak_detection(hashtag, count_series, time_window, time_frame, sensibility =
 
     else:
         logger.debug(" No peak %s - tweet frequency: %s tweets/s", hashtag, tweet_frequency)
-
-class Peak_detection_test_case(TestCase):
-
-    def initialize_test(self):
-        tweets = Series([1, 23233, 2, 3])
-
-        return peak_detection(tweets)
-
-    #metodo tem q comecar com test_
-    def test_check_for_null(self):
-        peaks = self.initialize_test()
-
-        self.assertIsNotNone(peaks)
-
-    def test_len(self):
-        peaks = self.initialize_test()
-
-        self.assertAlmostEqual(len(peaks), 2, places=3)
-
-if __name__ == '__main__':
-    unittest.main()

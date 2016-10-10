@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import peak_detection as peak
 import numpy as np
 from datetime import datetime
+import dateutil.parser
 
 
 def set_datetime_format(tweet_created_at):
@@ -33,8 +34,8 @@ class TweetAggregation:
         with self.conn:
             # @TODO: Not cool delete data from here! Change it!
             # Delete old data from the tweet table
-            drop_query = """DELETE FROM tweets WHERE created_at <= ?;"""
-            self.conn.execute(drop_query, (time.strftime('%a %b %d %H:%M:%S %z %Y'), ))
+            drop_query = "DELETE FROM tweets WHERE created_at <= '{}';".format(time.isoformat())
+            self.conn.execute(drop_query)
 
             # Get valid twitter data
             query = "select * from tweets"
@@ -43,17 +44,20 @@ class TweetAggregation:
             tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
 
         # Handle with twitter date format
-        tweets['agg_created_at'] = tweets['created_at'].map(lambda x: set_datetime_format(x))
+        tweets['agg_created_at'] = tweets['created_at'].apply(dateutil.parser.parse)
         tweets = tweets.set_index(['agg_created_at'])
 
         # Get time window in seconds
-        time_window = (max(list(tweets.index))-min(list(tweets.index)))/np.timedelta64(1, 's')
+        time_window = (max(tweets.index)-min(tweets.index))/np.timedelta64(1, 's')
 
         for hashtag, hashtag_tweets in tweets.groupby('hashtag'):
             qt_tweets = hashtag_tweets.tweet_id.resample(time_frame).count()
             peak.peak_detection(hashtag, qt_tweets, time_window, time_frame)
 
 
+def start_analyzer():
+    pass
+
 if __name__ == '__main__':
     table = TweetAggregation()
-    table.time_frame_evaluation(time_frame='1min', time_shift_minutes=70)
+    table.time_frame_evaluation(time_frame='1min', time_shift_minutes=300)

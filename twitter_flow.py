@@ -6,6 +6,7 @@ import sqlite3 as sql
 from datetime import datetime
 import logging
 import sys
+from twitter_analyser import set_datetime_format
 
 
 # Set log config
@@ -36,7 +37,10 @@ class StdoutListener(StreamListener):
             for hashtag in tweet_hashtags:
 
                 logger.debug('Found hashtag %s', hashtag)
-                tweet_info = [tweet_id, str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")), created_at, hashtag]
+                tweet_info = [tweet_id,
+                              datetime.utcnow().isoformat(),
+                              set_datetime_format(created_at).replace(tzinfo=None).isoformat(),
+                              hashtag]
                 infos.append(tweet_info)
 
             query = """insert into tweets(tweet_id, insert_date, created_at, hashtag) values(?, ?, ?, ?);"""
@@ -53,14 +57,11 @@ class StdoutListener(StreamListener):
         logger.debug('on_error %s', status)
 
 
-if __name__ == '__main__':
-    # set Twitter access
-    logger.info('Setting keys')
-    consumer_key = 'VJNTaFy9k8wOhvLMCNMrdrJ5b'
-    consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
-    access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
-    access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
-
+def start_flow(consumer_key,
+               consumer_secret_key,
+               access_token,
+               access_secret_token,
+               topic):
     logger.info('Initializing listener')
     # Instantiate listener
     l = StdoutListener()
@@ -73,4 +74,15 @@ if __name__ == '__main__':
     logger.info('Beginning streaming')
     # Start data stream
     stream = Stream(auth, l)
-    stream.filter(track=['SundayMorning'], languages=['en'])
+    stream.filter(track=['trump'], languages=['en'])
+
+
+if __name__ == '__main__':
+    # set Twitter access
+    logger.info('Setting keys')
+    consumer_key = 'VJNTaFy9k8wOhvLMCNMrdrJ5b'
+    consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
+    access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
+    access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
+    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, 'trump')
+
