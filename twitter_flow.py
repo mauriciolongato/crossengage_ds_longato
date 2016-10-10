@@ -61,7 +61,11 @@ def start_flow(consumer_key,
                consumer_secret_key,
                access_token,
                access_secret_token,
-               topic):
+               track,
+               languages=['en'],
+               locations = None,
+               ):
+
     logger.info('Initializing listener')
     # Instantiate listener
     l = StdoutListener()
@@ -74,7 +78,10 @@ def start_flow(consumer_key,
     logger.info('Beginning streaming')
     # Start data stream
     stream = Stream(auth, l)
-    stream.filter(track=['trump'], languages=['en'])
+    stream.filter(track=['trump'],
+                  languages=['en'],
+                  locations=None,
+                  )
 
 
 if __name__ == '__main__':
