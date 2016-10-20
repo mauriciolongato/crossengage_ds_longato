@@ -20,25 +20,24 @@ class TweetAggregation:
      - Calls peak_detection
     """
 
-    def __init__(self):
-        self.conn = sql.connect('./twitter_streaming_data.db')
+    def __init__(self, db_obj):
+        self.conn = db_obj.conn
 
-    def time_frame_evaluation(self, time_frame, time_shift_minutes):
+    def time_frame_evaluation(self
+                              , time_frame
+                              , sensibility
+                              , minimum_tweet_per_sec):
         """
         Set data series into a given time_frame
         It will also clean the table to maintain the data in the given period of time
         """
 
-        time = datetime.utcnow() - timedelta(hours=0, minutes=time_shift_minutes, seconds=0)
+        # time = datetime.utcnow() - timedelta(hours=0, minutes=time_shift_minutes, seconds=0)
 
         with self.conn:
-            # @TODO: Not cool delete data from here! Change it!
-            # Delete old data from the tweet table
-            drop_query = "DELETE FROM tweets WHERE created_at <= '{}';".format(time.isoformat())
-            self.conn.execute(drop_query)
-
-            # Get valid twitter data
-            query = "select * from tweets"
+            # Get Twitter data
+            # @TODO: Change query in order to limit the interval of analisys
+            query = "select * from tweets;"
             proc_data = self.conn.execute(query)
             cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
             tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
@@ -52,12 +51,26 @@ class TweetAggregation:
 
         for hashtag, hashtag_tweets in tweets.groupby('hashtag'):
             qt_tweets = hashtag_tweets.tweet_id.resample(time_frame).count()
-            peak.peak_detection(hashtag, qt_tweets, time_window, time_frame)
+            peak.peak_detection(hashtag,
+                                qt_tweets,
+                                time_window,
+                                time_frame,
+                                sensibility,
+                                minimum_tweet_per_sec)
 
 
-def start_analyzer():
+def start_analyzer(peak_detection_sensibility,
+                   minimum_tweet_per_sec,
+                   time_frame,
+                   data_base):
+
+    table = TweetAggregation(data_base)
+    table.time_frame_evaluation(time_frame=time_frame[0],
+                                sensibility=peak_detection_sensibility[0],
+                                minimum_tweet_per_sec=minimum_tweet_per_sec)
+
     pass
 
 if __name__ == '__main__':
     table = TweetAggregation()
-    table.time_frame_evaluation(time_frame='1min', time_shift_minutes=300)
+    table.time_frame_evaluation(time_frame='1min')

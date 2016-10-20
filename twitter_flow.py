@@ -7,22 +7,22 @@ from datetime import datetime
 import logging
 import sys
 from twitter_analyser import set_datetime_format
+import set_db
 
 
 # Set log config
 logging.basicConfig(filename='log/twitter_flow.txt', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
-#logger.addHandler(handler)
+logger.addHandler(handler)
 
 class StdoutListener(StreamListener):
     """
     Listen to twitter stream and write to a database.
     """
-    def __init__(self):
-        super().__init__()
-        # Create connection
-        self.conn = sql.connect('./twitter_streaming_data.db')
+    def __init__(self, db_obj):
+        self.db_obj = db_obj
+        self.conn = db_obj.conn
 
     def on_data(self, data):
         try:
@@ -37,15 +37,15 @@ class StdoutListener(StreamListener):
             for hashtag in tweet_hashtags:
 
                 logger.debug('Found hashtag %s', hashtag)
+
                 tweet_info = [tweet_id,
                               datetime.utcnow().isoformat(),
                               set_datetime_format(created_at).replace(tzinfo=None).isoformat(),
                               hashtag]
+
                 infos.append(tweet_info)
 
-            query = """insert into tweets(tweet_id, insert_date, created_at, hashtag) values(?, ?, ?, ?);"""
-            with self.conn:
-                self.conn.executemany(query, infos)
+            self.db_obj.insert_into_tweets(infos)
 
             return True
 
@@ -62,13 +62,12 @@ def start_flow(consumer_key,
                access_token,
                access_secret_token,
                track,
-               languages=['en'],
-               locations = None,
-               ):
+               locations,
+               data_base):
 
     logger.info('Initializing listener')
     # Instantiate listener
-    l = StdoutListener()
+    l = StdoutListener(data_base)
 
     logger.info('Authorization')
     # Set authentication
@@ -77,11 +76,12 @@ def start_flow(consumer_key,
 
     logger.info('Beginning streaming')
     # Start data stream
+    languages=["en"]
     stream = Stream(auth, l)
-    stream.filter(track=['trump'],
-                  languages=['en'],
-                  locations=None,
-                  )
+    #@TODO: Check the "[0]" from info!!!
+    stream.filter(track=track,
+                  languages=languages,
+                  locations=locations[0])
 
 
 if __name__ == '__main__':

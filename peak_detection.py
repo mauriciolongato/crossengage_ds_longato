@@ -38,7 +38,12 @@ def probability_calc(mu, std, frequency):
     return 1-scipy.stats.norm(mu, std).cdf(frequency)
 
 
-def peak_detection(hashtag, count_series, time_window, time_frame, sensibility = 0.98, freq_lim = 0.08):
+def peak_detection(hashtag,
+                   count_series,
+                   time_window,
+                   time_frame,
+                   sensibility,
+                   minimum_tweet_per_sec):
     """
     function to detect peaks of a certain hashtag
     peak will be defined as:
@@ -51,7 +56,7 @@ def peak_detection(hashtag, count_series, time_window, time_frame, sensibility =
 
     # Evaluates the peaks considering tweets/s of a given hashtag and the probability of a frequency
     tweet_frequency = float(count_series.sum())/time_window
-    if tweet_frequency >= freq_lim:
+    if tweet_frequency >= minimum_tweet_per_sec:
 
         # Calculate the occurrence's probability of a given frequency - Using normal distribution
         (mu, std) = scipy.stats.norm.fit(count_series)
@@ -64,7 +69,7 @@ def peak_detection(hashtag, count_series, time_window, time_frame, sensibility =
         # Built a dict containing peak's information
         result = {}
         result['hashtag'] = hashtag
-        result['criteria'] = {'sensibility': sensibility, 'freq_lim': freq_lim}
+        result['criteria'] = {'sensibility': sensibility, 'freq_lim': minimum_tweet_per_sec}
         result['stats'] = {'mean' : mu, 'std' : std}
         result['peaks'] = peaks['tweet_id'].to_dict()
         result['peaks_info'] = {'quantity': peaks['tweet_id'].to_dict(), 'probability': peaks['tweet_id'].to_dict()}
@@ -73,8 +78,16 @@ def peak_detection(hashtag, count_series, time_window, time_frame, sensibility =
         peak_list_info = []
         for peak_time, qt_tweets in result['peaks'].items():
 
-            peak = (str(peak_time)+hashtag, str(peak_time), time_frame, hashtag, mu, std, sensibility, freq_lim
-                    , int(qt_tweets), peaks['probability'][peak_time])
+            peak = (str(peak_time)+hashtag,
+                    str(peak_time),
+                    time_frame,
+                    hashtag,
+                    mu,
+                    std,
+                    sensibility,
+                    minimum_tweet_per_sec,
+                   int(qt_tweets),
+                    peaks['probability'][peak_time])
 
             peak_list_info.append(peak)
             logger.debug('Found peak %s', peak)
