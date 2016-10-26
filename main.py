@@ -2,7 +2,7 @@ import argparse
 import multiprocessing as mp
 import uuid
 import re
-import time
+import datetime
 
 import twitter_analyser
 import set_db
@@ -18,8 +18,14 @@ def location_coord(s):
     :return: tuple of coordinates
     """
     try:
-        sw_lon, sw_lat, ne_lon, ne_lat = map(float, s.split(','))
-        return sw_lon, sw_lat, ne_lon, ne_lat
+        locations = tuple(map(float, s.split(',')))
+        if len(locations) > 0:
+            if len(locations) % 4 == 0:
+                return locations
+            else:
+                raise argparse.ArgumentTypeError("Coordinates must be at least 4 values")
+        else:
+            raise argparse.ArgumentTypeError("Coordinates must be sw_lon, sw_lat, ne_lon, ne_lat")
     except:
         raise argparse.ArgumentTypeError("Coordinates must be sw_lon, sw_lat, ne_lon, ne_lat")
 
@@ -148,8 +154,8 @@ def main():
 
     # 1. Create DB
     db_name = uuid.uuid1()
-    db = set_db.instance_db(db_name)
-    db.set_tables()
+    db_obj = set_db.instance_db(db_name)
+    db_obj.set_tables()
 
     # Get request parameters
     parser = argparse.ArgumentParser(description='Run peak detector.')
@@ -206,26 +212,27 @@ def main():
                    access_secret_token,
                    args.track,
                    args.locations,
-                   db]
+                   db_obj]
 
     analyser_params =[args.peak_detection_sensibility,
                       args.minimum_tweet_per_sec,
                       args.time_frame,
-                      db]
-
-
+                      db_obj]
 
 
     flow_process = mp.Process(target=twitter_flow.start_flow, args=flow_params)
     flow_process.start()
 
-    time.sleep(120)
-    analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
-    analyzer_process.start()
+    #analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
+    #analyzer_process.start()
 
     flow_process.join()
-    analyzer_process.join()
+    #analyzer_process.join()
 
 
 if __name__ == '__main__':
-    main()
+    time_i = datetime.datetime.utcnow().isoformat()
+    time_i = datetime.datetime.utcnow()
+    time_f = time_i - datetime.timedelta(minutes=10)
+
+    #main()

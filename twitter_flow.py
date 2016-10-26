@@ -2,12 +2,12 @@ from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
 import json
-import sqlite3 as sql
+
 from datetime import datetime
 import logging
 import sys
 from twitter_analyser import set_datetime_format
-import set_db
+
 
 
 # Set log config
@@ -35,20 +35,16 @@ class StdoutListener(StreamListener):
             # Start to populate tweet table
             infos = []
             for hashtag in tweet_hashtags:
-
                 logger.debug('Found hashtag %s', hashtag)
 
                 tweet_info = [tweet_id,
                               datetime.utcnow().isoformat(),
                               set_datetime_format(created_at).replace(tzinfo=None).isoformat(),
                               hashtag]
-
                 infos.append(tweet_info)
 
             self.db_obj.insert_into_tweets(infos)
-
             return True
-
         except Exception as e:
 
             logger.exception(e)

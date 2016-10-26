@@ -1,5 +1,5 @@
 import scipy.stats
-import sqlite3 as sql
+import set_db
 import logging
 import sys
 
@@ -32,7 +32,7 @@ def probability_calc(mu, std, frequency):
 
     :param mu: Average of qt_tweet/time frame
     :param std: Standard Deviation
-    :param frequency: frequency of tweets///
+    :param frequency: frequency of tweets
     :return: probability of the frequency
     """
     return 1-scipy.stats.norm(mu, std).cdf(frequency)
@@ -43,7 +43,8 @@ def peak_detection(hashtag,
                    time_window,
                    time_frame,
                    sensibility,
-                   minimum_tweet_per_sec):
+                   minimum_tweet_per_sec,
+                   db_obj):
     """
     function to detect peaks of a certain hashtag
     peak will be defined as:
@@ -86,21 +87,13 @@ def peak_detection(hashtag,
                     std,
                     sensibility,
                     minimum_tweet_per_sec,
-                   int(qt_tweets),
+                    int(qt_tweets),
                     peaks['probability'][peak_time])
 
             peak_list_info.append(peak)
             logger.debug('Found peak %s', peak)
 
-        query = """insert into
-                    tweet_peaks(id, peak_datetime, time_frame, hashtag, mean, std, sensibility
-                                , freq_limit, qt_tweets, probability)
-                    values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
-        with sql.connect('./twitter_streaming_data.db') as conn:
-            try:
-                conn.executemany(query, peak_list_info)
-            except Exception as e:
-                logger.exception(e)
+        db_obj.insert_into_tweet_peaks(peak_list_info)
 
     else:
         logger.debug(" No peak %s - tweet frequency: %s tweets/s", hashtag, tweet_frequency)

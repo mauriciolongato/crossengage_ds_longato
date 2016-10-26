@@ -3,6 +3,9 @@ import os
 
 
 class instance_db:
+    """
+    Handle with DB activities
+    """
 
     def __init__(self, name):
         """
@@ -96,11 +99,50 @@ class instance_db:
                     tweet_peaks(id, peak_datetime, time_frame, hashtag, mean, std, sensibility
                                 , freq_limit, qt_tweets, probability)
                     values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
-        with sql.connect('./twitter_streaming_data.db') as conn:
+        with self.conn:
             try:
-                conn.executemany(query, peak_list_info)
+                self.conn.executemany(query, peak_list_info)
             except Exception as e:
-                logger.exception(e)
+                #@TODO: Set log here!
+                #logger.exception(e)
+                pass
 
+    def get_tweets_data(self):
+        """
+        get the data from tweets table
+        :return: pandas dataframe with data
+        """
+        query = "select * from tweets;"
+        proc_data = self.conn.execute(query)
+        cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
+        tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
 
+        return tweets
 
+    def get_tweets_data_interval(self, time_i, time_f):
+        """
+
+        :param time_i:
+        :param time_f:
+        :return:
+        """
+
+        query = "select * from tweets where created_at between {} and {};".format(time_i, time_f)
+        proc_data = self.conn.execute(query)
+        cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
+        tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
+
+        return tweets
+
+    def get_time_last_tweet_tweets(self):
+        """
+
+        :return:
+        """
+
+        query = "select created_at from tweets order by 1 desc limit 1;"
+        proc_data = self.conn.execute(query)
+        cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
+        time = proc_data.fetchall()
+
+        return time
