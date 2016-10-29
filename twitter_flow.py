@@ -9,12 +9,11 @@ import sys
 from twitter_analyser import set_datetime_format
 
 
-
 # Set log config
 logging.basicConfig(filename='log/twitter_flow.txt', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(handler)
+#logger.addHandler(handler)
 
 class StdoutListener(StreamListener):
     """
@@ -22,9 +21,9 @@ class StdoutListener(StreamListener):
     """
     def __init__(self, db_obj):
         self.db_obj = db_obj
-        self.conn = db_obj.conn
 
     def on_data(self, data):
+
         try:
             # Loads twitter's json data into a data base
             received_tweet = json.loads(data)
@@ -33,17 +32,20 @@ class StdoutListener(StreamListener):
             tweet_hashtags = [x["text"] for x in received_tweet["entities"]["hashtags"]]
 
             # Start to populate tweet table
-            infos = []
+            info = []
             for hashtag in tweet_hashtags:
                 logger.debug('Found hashtag %s', hashtag)
 
-                tweet_info = [tweet_id,
+                tweet_info = (tweet_id,
                               datetime.utcnow().isoformat(),
                               set_datetime_format(created_at).replace(tzinfo=None).isoformat(),
-                              hashtag]
-                infos.append(tweet_info)
+                              hashtag)
 
-            self.db_obj.insert_into_tweets(infos)
+                info.append(tweet_info)
+
+            self.db_obj.insert_into_tweets(info)
+
+
             return True
         except Exception as e:
 
@@ -53,13 +55,9 @@ class StdoutListener(StreamListener):
         logger.debug('on_error %s', status)
 
 
-def start_flow(consumer_key,
-               consumer_secret_key,
-               access_token,
-               access_secret_token,
-               track,
-               locations,
-               data_base):
+def start_flow(consumer_key, consumer_secret_key,
+               access_token, access_secret_token,
+               track, locations, data_base):
 
     logger.info('Initializing listener')
     # Instantiate listener

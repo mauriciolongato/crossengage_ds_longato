@@ -2,11 +2,11 @@ import argparse
 import multiprocessing as mp
 import uuid
 import re
-import datetime
 
 import twitter_analyser
 import set_db
 import twitter_flow
+import flask_app
 
 
 
@@ -180,7 +180,7 @@ def main():
                         type=set_sensibility,
                         nargs=1)
 
-    parser.add_argument('--tweet_seq',
+    parser.add_argument('--min_tweets_sec',
                         help="Minimum tweets per second",
                         dest="minimum_tweet_per_sec",
                         type=set_min_tweet_per_sec,
@@ -223,16 +223,13 @@ def main():
     flow_process = mp.Process(target=twitter_flow.start_flow, args=flow_params)
     flow_process.start()
 
-    #analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
-    #analyzer_process.start()
+    analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
+    analyzer_process.start()
+
 
     flow_process.join()
-    #analyzer_process.join()
+    analyzer_process.join()
 
 
 if __name__ == '__main__':
-    time_i = datetime.datetime.utcnow().isoformat()
-    time_i = datetime.datetime.utcnow()
-    time_f = time_i - datetime.timedelta(minutes=10)
-
-    #main()
+    main()

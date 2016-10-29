@@ -37,14 +37,8 @@ def probability_calc(mu, std, frequency):
     """
     return 1-scipy.stats.norm(mu, std).cdf(frequency)
 
-
-def peak_detection(hashtag,
-                   count_series,
-                   time_window,
-                   time_frame,
-                   sensibility,
-                   minimum_tweet_per_sec,
-                   db_obj):
+def peak_detection(hashtag, count_series, time_window, time_frame,
+                   sensibility, minimum_tweet_per_sec, db_obj):
     """
     function to detect peaks of a certain hashtag
     peak will be defined as:
@@ -67,27 +61,14 @@ def peak_detection(hashtag,
         logger.debug('Hashtag candidate to have a peak: %s - %s tweets/s', hashtag, tweet_frequency)
         peaks = frequencies[frequencies['probability'] <= (1-sensibility)]
 
-        # Built a dict containing peak's information
-        result = {}
-        result['hashtag'] = hashtag
-        result['criteria'] = {'sensibility': sensibility, 'freq_lim': minimum_tweet_per_sec}
-        result['stats'] = {'mean' : mu, 'std' : std}
-        result['peaks'] = peaks['tweet_id'].to_dict()
-        result['peaks_info'] = {'quantity': peaks['tweet_id'].to_dict(), 'probability': peaks['tweet_id'].to_dict()}
-
         # Insert into the database
         peak_list_info = []
-        for peak_time, qt_tweets in result['peaks'].items():
+        for peak_time, qt_tweets in peaks['tweet_id'].to_dict().items():
 
-            peak = (str(peak_time)+hashtag,
-                    str(peak_time),
-                    time_frame,
-                    hashtag,
-                    mu,
-                    std,
-                    sensibility,
-                    minimum_tweet_per_sec,
-                    int(qt_tweets),
+            # key are composed by time from peak and the correspondent hashtag
+            peak = (str(peak_time)+hashtag, str(peak_time),
+                    time_frame, hashtag, mu, std, sensibility,
+                    minimum_tweet_per_sec, int(qt_tweets),
                     peaks['probability'][peak_time])
 
             peak_list_info.append(peak)

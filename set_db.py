@@ -1,6 +1,6 @@
 import sqlite3 as sql
 import os
-
+import pandas as pd
 
 class instance_db:
     """
@@ -127,7 +127,7 @@ class instance_db:
         :return:
         """
 
-        query = "select * from tweets where created_at between {} and {};".format(time_i, time_f)
+        query = "select * from tweets where created_at between '{}' and '{}';".format(time_i, time_f)
         proc_data = self.conn.execute(query)
         cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
         tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
@@ -142,7 +142,6 @@ class instance_db:
 
         query = "select created_at from tweets order by 1 desc limit 1;"
         proc_data = self.conn.execute(query)
-        cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
         time = proc_data.fetchall()
 
-        return time
+        return time[0][0]
