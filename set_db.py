@@ -13,13 +13,13 @@ class instance_db:
         :param name: name from the DB that will store the data
         """
         self.name = name
-        self.conn = sql.connect('./{}.db'.format(self.name))
+        #self.conn = sql.connect('./{}.db'.format(self.name))
 
     def drop_tables(self):
         """
         Drop all the tables from the instantiated DB
         """
-        with self.conn as conn:
+        with sql.connect('./{}.db'.format(self.name)) as conn:
             conn.execute("drop table tweets")
             conn.execute("drop table tweet_peaks")
 
@@ -27,7 +27,7 @@ class instance_db:
         """
         Create all the necessary tables to store twitter streaming data and analysis
         """
-        with self.conn as conn:
+        with sql.connect('./{}.db'.format(self.name)) as conn:
             conn.execute("""CREATE TABLE IF NOT EXISTS tweets(
                             id INTEGER PRIMARY KEY,
                             tweet_id INTEGER,
@@ -73,8 +73,8 @@ class instance_db:
         query = """insert into tweets(tweet_id, insert_date, created_at, hashtag)
                    values(?, ?, ?, ?);"""
 
-        with self.conn:
-            self.conn.executemany(query, infos)
+        with sql.connect('./{}.db'.format(self.name)) as conn:
+            conn.executemany(query, infos)
 
     def insert_into_tweet_peaks(self, peak_list_info):
         """
@@ -99,9 +99,9 @@ class instance_db:
                     tweet_peaks(id, peak_datetime, time_frame, hashtag, mean, std, sensibility
                                 , freq_limit, qt_tweets, probability)
                     values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
-        with self.conn:
+        with sql.connect('./{}.db'.format(self.name)) as conn:
             try:
-                self.conn.executemany(query, peak_list_info)
+                conn.executemany(query, peak_list_info)
             except Exception as e:
                 #@TODO: Set log here!
                 #logger.exception(e)
@@ -113,9 +113,12 @@ class instance_db:
         :return: pandas dataframe with data
         """
         query = "select * from tweets;"
-        proc_data = self.conn.execute(query)
+        with sql.connect('./{}.db'.format(self.name)) as conn:
+            proc_data = conn.execute(query)
+            data = proc_data.fetchall()
+
         cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
-        tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
+        tweets = pd.DataFrame.from_records(data=data, columns=cols)
 
         return tweets
 
@@ -128,9 +131,13 @@ class instance_db:
         """
 
         query = "select * from tweets where created_at between '{}' and '{}';".format(time_i, time_f)
-        proc_data = self.conn.execute(query)
+
+        with sql.connect('./{}.db'.format(self.name)) as conn:
+            proc_data = conn.execute(query)
+            data = proc_data.fetchall()
+
         cols = ["id", "tweet_id", "insert_date", "created_at", "hashtag"]
-        tweets = pd.DataFrame.from_records(data=proc_data.fetchall(), columns=cols)
+        tweets = pd.DataFrame.from_records(data=data, columns=cols)
 
         return tweets
 
@@ -141,7 +148,8 @@ class instance_db:
         """
 
         query = "select created_at from tweets order by 1 desc limit 1;"
-        proc_data = self.conn.execute(query)
-        time = proc_data.fetchall()
+        with sql.connect('./{}.db'.format(self.name)) as conn:
+            proc_data = conn.execute(query)
+            time = proc_data.fetchall()
 
         return time[0][0]

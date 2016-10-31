@@ -58,15 +58,21 @@ def start_analyzer(peak_detection_sensibility,
     table = TweetAggregation(data_base, time_frame[0])
     flag = True
     while flag == True:
-        #TODO: Create function - from time_frame to seconds
-        #time.sleep(30*5)
-        table.time_frame_evaluation(sensibility=peak_detection_sensibility[0],
-                                    minimum_tweet_per_sec=minimum_tweet_per_sec)
-        time.sleep(30 * 5)
 
-    pass
+        #TODO: Create function - from time_frame to seconds
+        try:
+            table.time_frame_evaluation(sensibility=peak_detection_sensibility[0],
+                                        minimum_tweet_per_sec=minimum_tweet_per_sec[0])
+            flag = True
+            time.sleep(15)
+        except Exception as e:
+            print("except", e)
+            time.sleep(15)
+
+
+
 
 if __name__ == '__main__':
     #db_obj = set_db.instance_db("teste_set")
-    db_obj = set_db.instance_db('b97b4f1e-9df5-11e6-a95f-801934389802')
+    db_obj = set_db.instance_db('8b98dfd4-9e0a-11e6-a95f-801934389802')
     start_analyzer([0.98], 0.1, ["30s"], db_obj)
