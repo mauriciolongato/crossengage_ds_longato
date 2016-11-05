@@ -39,7 +39,7 @@ def track_list(s):
 
     try:
         s_list = s.split(',')
-        return s_list[0]
+        return s_list
     except:
         raise argparse.ArgumentTypeError("Tracks must be a string of tags separated by comma")
 
@@ -120,23 +120,19 @@ def set_time_frame(s):
         raise argparse.ArgumentTypeError(
              """Input must contain a positive integer and the time unity. Ex: 30s, 5min or 1hour""")
 
-def twitter_analyser_periodicity(time_frame, periodicity):
+def dataset_size(s):
     """
-    Evaluate the period in seconds between two executions of twitter_analyser
+    Handle dataset size values
 
-    :param time_frame: Parameter given by the user to set how to frame time data from twitter
-    :param periodicity: How many time frames are necessary to evaluate peak
-    :return: period between the executions of twitter_analyser in seconds
+    :param s: string or integer
+    :return: int
     """
-    frames = {'s':1, 'min':60, 'hour':3600}
 
-    # test to check if s is in the correct format
-    match = re.match(r"([0-9]+)([a-z]+)", time_frame, re.I)
-    items = match.groups()
-
-    period = items[0] * frames[items[1]] * periodicity
-
-    return period
+    try:
+        size = int(s)
+        return size
+    except:
+        raise argparse.ArgumentTypeError("dataset size must be an integer")
 
 def main():
     """
@@ -149,7 +145,6 @@ def main():
 
     The periodicity of twitter_analyser is a multiple of time_frame
 
-
     """
 
     # 1. Create DB
@@ -157,25 +152,23 @@ def main():
     db_obj = set_db.instance_db(db_name)
     db_obj.set_tables()
 
-    # Get request parameters
+    # 2. Handle parameters
     parser = argparse.ArgumentParser(description='Run peak detector.')
 
-    # Parameters to set twitter_flow
     parser.add_argument('--track',
-                        help="Track",
+                        help="Track ex: 'word_1, word_2, ... word_n'",
                         dest="track",
                         type=track_list,
                         nargs=1)
 
     parser.add_argument('--loc',
-                        help="Coordinate",
+                        help="Coordinate 'sw_lon_1, sw_lat_1, ne_lon_1, ne_lat_1, ...'",
                         dest="locations",
                         type=location_coord,
                         nargs=1)
 
-    # Parameters to find peaks
     parser.add_argument('--sensibility',
-                        help="Peak detection sensibility",
+                        help="Peak detection sensibility - number between 0 and 1",
                         dest="peak_detection_sensibility",
                         type=set_sensibility,
                         nargs=1)
@@ -187,25 +180,29 @@ def main():
                         nargs=1)
 
     parser.add_argument('--time_frame',
-                        help="Time frame",
+                        help="Time frame - tweets will be grouped in this time frames",
                         dest="time_frame",
                         type=set_time_frame,
                         nargs=1)
 
+    parser.add_argument('--analysis_dataset_size',
+                        help="How many frames will be considered in order to analyse peak existence",
+                        dest="analysis_dataset_size",
+                        type=dataset_size,
+                        nargs=1)
 
-    #@TODO: Set analysis_period
-    #parser.add_argument('analysis_period')
     args = parser.parse_args()
 
     print(args)
 
 
+    #@TODO: Shouldn't be hardcoded
     consumer_key = 'VJNTaFy9k8wOhvLMCNMrdrJ5b'
     consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
     access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
     access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
 
-
+    # 3. Initialize twitter_flow
     flow_params = [consumer_key,
                    consumer_secret_key,
                    access_token,
@@ -217,6 +214,7 @@ def main():
     analyser_params =[args.peak_detection_sensibility,
                       args.minimum_tweet_per_sec,
                       args.time_frame,
+                      args.analysis_dataset_size,
                       db_obj]
 
 
@@ -226,10 +224,19 @@ def main():
     analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
     analyzer_process.start()
 
+    #flask_app = mp.Process(target=flask_app.start_analyzer, args=analyser_params)
+    #flask_app.start()
+    #flask_app.join()
 
     flow_process.join()
     analyzer_process.join()
 
 
 if __name__ == '__main__':
+    # Test_config = --track "trump, obama"
+    #               --loc "-79.762418, 40.477408, -71.778137, 45.010840, -79.762418, 40.477408, -71.778137, 45.010840"
+    #               --sensibility 0.98
+    #               --time_frame "1Min"
+    #               --min_tweets_sec 0.1
+
     main()

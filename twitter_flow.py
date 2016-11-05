@@ -13,7 +13,7 @@ from twitter_analyser import set_datetime_format
 logging.basicConfig(filename='log/twitter_flow.txt', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
-#logger.addHandler(handler)
+logger.addHandler(handler)
 
 class StdoutListener(StreamListener):
     """
@@ -49,7 +49,7 @@ class StdoutListener(StreamListener):
             return True
         except Exception as e:
 
-            logger.exception(e)
+            logger.exception(data, e)
 
     def on_error(self, status):
         logger.debug('on_error %s', status)
@@ -73,7 +73,7 @@ def start_flow(consumer_key, consumer_secret_key,
     languages=["en"]
     stream = Stream(auth, l)
     #@TODO: Check the "[0]" from info!!!
-    stream.filter(track=track,
+    stream.filter(track=track[0],
                   languages=languages,
                   locations=locations[0])
 
