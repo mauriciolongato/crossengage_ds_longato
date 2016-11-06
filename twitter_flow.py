@@ -2,29 +2,41 @@ from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
 import json
-
 from datetime import datetime
 import logging
-import sys
-from twitter_analyser import set_datetime_format
+
+from helpers.DbFunctions import DbFunctions
+from helpers.data_type import set_datetime_format
 
 
 # Set log config
-logging.basicConfig(filename='log/twitter_flow.txt', level=logging.DEBUG)
+
+# create logger
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+# create file handler and ser level to debug
+fh = logging.FileHandler('log/twitter_flow.txt')
+fh.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s", "%Y-%m-%d %H:%M:%S")
+fh.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(fh)
+
 
 class StdoutListener(StreamListener):
     """
     Listen to twitter stream and write to a database.
     """
+
     def __init__(self, db_obj):
+        super().__init__()
         self.db_obj = db_obj
 
     def on_data(self, data):
 
         try:
+            #TODO: Handle better - some times theres no received_tweet["id"]
             # Loads twitter's json data into a data base
             received_tweet = json.loads(data)
             tweet_id = received_tweet["id"]
@@ -45,7 +57,6 @@ class StdoutListener(StreamListener):
 
             self.db_obj.insert_into_tweets(info)
 
-
             return True
         except Exception as e:
 
@@ -57,24 +68,24 @@ class StdoutListener(StreamListener):
 
 def start_flow(consumer_key, consumer_secret_key,
                access_token, access_secret_token,
-               track, locations, data_base):
+               languages, track, locations, data_base):
+    """
+    Interface between defining parameter (main.py) and instantiate StdoutListener class
+    """
 
     logger.info('Initializing listener')
     # Instantiate listener
     l = StdoutListener(data_base)
 
     logger.info('Authorization')
-    # Set authentication
     auth = OAuthHandler(consumer_key, consumer_secret_key)
     auth.set_access_token(access_token, access_secret_token)
 
-    logger.info('Beginning streaming')
     # Start data stream
-    languages=["en"]
+    logger.info('Beginning streaming')
     stream = Stream(auth, l)
-    #@TODO: Check the "[0]" from info!!!
     stream.filter(track=track[0],
-                  languages=languages,
+                  languages=languages[0],
                   locations=locations[0])
 
 
@@ -85,5 +96,11 @@ if __name__ == '__main__':
     consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
     access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
     access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
-    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, 'trump')
 
+    name ='banco_teste'
+    db_obj = DbFunctions(name)
+    db_obj.set_tables()
+
+    locations = [(-79.762418, 40.477408, -71.778137, 45.010840)]
+    # @TODO: parameter data_base unfilled
+    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, [['trump']], locations, db_obj)

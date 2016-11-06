@@ -1,44 +1,27 @@
-from datetime import datetime
 import datetime
-import dateutil.parser
 import time
-import re
+import dateutil.parser
+import logging
 
-import set_db
-import peak_detection as peak
+import helpers.peak_detection as peak
+from helpers import DbFunctions
+from helpers.data_type import time_frame_seconds
 
 
-def set_datetime_format(tweet_created_at):
-    format = '%a %b %d %H:%M:%S %z %Y'
-    return datetime.datetime.strptime(tweet_created_at, format)
+# Set log config
 
-def time_frame_seconds(time_frame):
-    """
-    Function receive time frame num.unit and return the time in seconds
+# create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+# create file handler and ser level to debug
+fh = logging.FileHandler('log/twitter_analyser.txt')
+fh.setLevel(logging.DEBUG)
+# create formatter
+formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s", "%Y-%m-%d %H:%M:%S")
+fh.setFormatter(formatter)
+# add ch to logger
+logger.addHandler(fh)
 
-    :param time_frame: time frame
-    :return: time frame in seconds
-    """
-    frames = {'s': 1, 'min': 60, 'hour': 3600}
-
-    match = re.match(r"([0-9]+)([a-z]+)", time_frame, re.I)
-    items = match.groups()
-
-    return int(items[0]) * frames[items[1]]
-
-def twitter_analyser_periodicity(time_frame, periodicity):
-    """
-    Evaluate the period in seconds between two executions of twitter_analyser
-
-    :param time_frame: Parameter given by the user to set how to frame time data from twitter
-    :param periodicity: How many time frames are necessary to evaluate peak
-    :return: period between the executions of twitter_analyser in seconds
-    """
-    time_frame_s = time_frame_seconds(time_frame)
-
-    period = time_frame_s * periodicity
-
-    return period
 
 class TweetAggregation:
     """
@@ -47,6 +30,7 @@ class TweetAggregation:
      - Calls peak_detection
     """
 
+    #TODO: Change db_obj name
     def __init__(self, db_obj, time_frame):
         self.db_obj = db_obj
         self.time_frame = time_frame
@@ -81,25 +65,26 @@ class TweetAggregation:
 def start_analyzer(peak_detection_sensibility,
                    minimum_tweet_per_sec,
                    time_frame,
-                   analysis_dataset_size,
+                   analysis_sample_size,
                    data_base):
 
-    # Analysis must be started only after the minimum dataset_size are settled
-    dataset_size_sec = twitter_analyser_periodicity(time_frame[0], analysis_dataset_size)
-    time.sleep(dataset_size_sec)
+    # Analysis must be started only after the minimum sample_size are recorded
+    time_frame_s = time_frame_seconds(time_frame[0])
+    dataset_size = time_frame_s * analysis_sample_size[0]
+    time.sleep(dataset_size)
 
     table = TweetAggregation(data_base, time_frame[0])
     flag = True
 
-    # Fuction analyse existense of a peak every time that a frame is complete
-    while flag == True:
+    # Analyses existence of a peak every time that a frame is complete
+    while flag:
 
         try:
             table.time_frame_evaluation(sensibility=peak_detection_sensibility[0],
                                         minimum_tweet_per_sec=minimum_tweet_per_sec[0],
-                                        dataset_size=dataset_size_sec)
+                                        dataset_size=dataset_size)
 
-            time.sleep(time_frame_seconds(time_frame[0]))
+            time.sleep(time_frame_s)
             flag = True
 
         except Exception as e:
@@ -108,6 +93,6 @@ def start_analyzer(peak_detection_sensibility,
 
 
 if __name__ == '__main__':
-    db_obj = set_db.instance_db("teste_set")
-    #db_obj = set_db.instance_db('8b98dfd4-9e0a-11e6-a95f-801934389802')
-    start_analyzer([0.98], [0.1], ["30s"], 1, db_obj)
+
+    db_obj = DbFunctions.DbFunctions("teste_set")
+    start_analyzer([0.98], [0.1], ["30s"], [1], db_obj)

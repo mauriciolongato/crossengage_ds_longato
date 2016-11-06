@@ -7,7 +7,7 @@ app = Flask(__name__)
 def latest_peak():
     #@TODO: Pass db object as parameter to the function
     #conn = sql.connect('twitter_streaming_data.db')
-    conn = sql.connect('9315b800-9e18-11e6-a95f-801934389802.db')
+    conn = sql.connect('./example_db/twitter_streaming_data_peak_tests.db')
     conn.row_factory = sql.Row
 
     with conn:

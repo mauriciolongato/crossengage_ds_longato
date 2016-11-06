@@ -2,26 +2,25 @@ import sqlite3 as sql
 import os
 import pandas as pd
 
-class instance_db:
+
+class DbFunctions:
     """
-    Handle with DB activities
+    Handles twitter database functions
     """
 
     def __init__(self, name):
         """
-        Class handles with the data storage from the twitter
         :param name: name from the DB that will store the data
         """
         self.name = name
-        #self.conn = sql.connect('./{}.db'.format(self.name))
 
     def drop_tables(self):
         """
         Drop all the tables from the instantiated DB
         """
         with sql.connect('./{}.db'.format(self.name)) as conn:
-            conn.execute("drop table tweets")
-            conn.execute("drop table tweet_peaks")
+            conn.execute("DROP TABLE tweets")
+            conn.execute("DROP TABLE tweet_peaks")
 
     def set_tables(self):
         """
@@ -53,48 +52,21 @@ class instance_db:
         """
         Delete db file
         """
-        dir = os.getcwd()
-        os.remove(dir+"/"+str(self.name)+".db")
+        current_dir = os.getcwd()
+        os.remove(current_dir + "/" + str(self.name) + ".db")
 
     def insert_into_tweets(self, infos):
         """
         Handle with insertion into tweet table
-
-        :param infos: list of tweets -  Each tweet contain:
-
-        infos = [(tweet_id, insert_date, created_at, hashtag)]
-
-        :param tweet_id: Twitter's tweet id
-        :param insert_date: Current Date time - Greenwich, isoformat
-        :param created_at: Twitter's creation date - COnverted to isoformat
-        :param hashtag: Tweet's hashtag
         """
-
-        query = """insert into tweets(tweet_id, insert_date, created_at, hashtag)
-                   values(?, ?, ?, ?);"""
-
+        query = "insert into tweets(tweet_id, insert_date, created_at, hashtag) values(?, ?, ?, ?);"
         with sql.connect('./{}.db'.format(self.name)) as conn:
             conn.executemany(query, infos)
 
     def insert_into_tweet_peaks(self, peak_list_info):
         """
         Handle with insertion into tweet_peaks table
-
-        :param infos: list of tweets -  Each tweet contain:
-
-        :param id: peak_datetime + hashtag
-        :param peak_datetime: tweet
-        :param time_frame:
-        :param hashtag:
-        :param mean:
-        :param std:
-        :param sensibility:
-        :param freq_limit:
-        :param qt_tweets:
-        :param probability:
-        :return:
         """
-
         query = """insert into
                     tweet_peaks(id, peak_datetime, time_frame, hashtag, mean, std, sensibility
                                 , freq_limit, qt_tweets, probability)
@@ -103,8 +75,8 @@ class instance_db:
             try:
                 conn.executemany(query, peak_list_info)
             except Exception as e:
-                #@TODO: Set log here!
-                #logger.exception(e)
+                # @TODO: Set log here!
+                # logger.exception(e)
                 pass
 
     def get_tweets_data(self):
@@ -142,10 +114,6 @@ class instance_db:
         return tweets
 
     def get_time_last_tweet_tweets(self):
-        """
-
-        :return:
-        """
 
         query = "select created_at from tweets order by 1 desc limit 1;"
         with sql.connect('./{}.db'.format(self.name)) as conn:
