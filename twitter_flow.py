@@ -35,17 +35,34 @@ class StdoutListener(StreamListener):
 
     def on_data(self, data):
 
+        data_flag = 1
+        # Loads twitter's json data into a data base
         try:
-            #TODO: Handle better - some times theres no received_tweet["id"]
-            # Loads twitter's json data into a data base
             received_tweet = json.loads(data)
+        except:
+            logger.info("Not able to load data")
+            data_flag = 0
+
+        # Loads twitter's json data into a data base
+        try:
             tweet_id = received_tweet["id"]
+        except:
+            logger.info("Data doesn't contain 'id': {}".format(data))
+            data_flag = 0
+
+        # Gather data
+        try:
             created_at = received_tweet["created_at"]
             tweet_hashtags = [x["text"] for x in received_tweet["entities"]["hashtags"]]
+        except:
+            logger.info("Data doesn't contain hashtags: {}".format(data))
+            data_flag = 0
 
+        if data_flag == 1:
             # Start to populate tweet table
             info = []
             for hashtag in tweet_hashtags:
+
                 logger.debug('Found hashtag %s', hashtag)
 
                 tweet_info = (tweet_id,
@@ -57,10 +74,8 @@ class StdoutListener(StreamListener):
 
             self.db_obj.insert_into_tweets(info)
 
-            return True
-        except Exception as e:
 
-            logger.exception(data, e)
+        return True
 
     def on_error(self, status):
         logger.debug('on_error %s', status)
