@@ -30,7 +30,6 @@ class TweetAggregation:
      - Calls peak_detection
     """
 
-    #TODO: Change db_obj name
     def __init__(self, db_obj, time_frame):
         self.db_obj = db_obj
         self.time_frame = time_frame
@@ -87,9 +86,9 @@ def start_analyzer(peak_detection_sensibility,
             time.sleep(time_frame_s)
             flag = True
 
-        except Exception as e:
-            print("except", e)
-            time.sleep(time_frame_seconds(time_frame))
+        except Exception:
+            logger.exception("fail to evaluate peake - message")
+            time.sleep(time_frame_s)
 
 
 if __name__ == '__main__':

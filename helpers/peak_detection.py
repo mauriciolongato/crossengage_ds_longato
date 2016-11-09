@@ -47,7 +47,6 @@ def peak_detection(hashtag, count_series, time_window, time_frame,
     tweet_frequency = float(count_series.sum())/time_window
     if tweet_frequency >= minimum_tweet_per_sec:
 
-        count_series.quartile()
         # Calculate the occurrence's probability of a given frequency - Using normal distribution
         (mu, std) = scipy.stats.norm.fit(count_series)
         frequencies = count_series.to_frame(name='count')
