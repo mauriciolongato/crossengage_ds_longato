@@ -1,12 +1,14 @@
 import argparse
 import multiprocessing as mp
 import uuid
+from datetime import datetime
 
+import configkeys as ck
 import twitter_analyser
 import twitter_flow
+import flask_app
 from helpers import DbFunctions
-from helpers.input_specification import location_coord, track_list, set_sensibility, set_min_tweet_per_sec, \
-    set_time_frame, set_sample_size
+from helpers.input_specification import location_coord, track_list, set_sensibility, set_min_tweet_per_sec, set_time_frame, set_sample_size
 
 
 def main():
@@ -23,9 +25,15 @@ def main():
     """
 
     # 1. Create DB
+    # DB for tweets
     db_name = uuid.uuid1()
     db_obj = DbFunctions.DbFunctions(db_name)
     db_obj.set_tables()
+
+    # DB that manages request
+    db_request_obj = DbFunctions.DbRequests()
+    db_request_obj.set_requests_table()
+
 
     # 2. Handle parameters
     parser = argparse.ArgumentParser(description='Run peak detector.')
@@ -68,15 +76,29 @@ def main():
 
     args = parser.parse_args()
 
-    #@TODO: Shouldn't be hardcoded
-    consumer_key = 'VJNTaFy9k8wOhvLMCNMrdrJ5b'
-    consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
-    access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
-    access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
-
-    # 3. Initialize twitter_flow
+    # Set language
     languages=[['en']]
 
+    # Set twitter keys
+    consumer_key = ck.keys["consumer_key"]
+    consumer_secret_key = ck.keys['consumer_secret_key']
+    access_token = ck.keys['access_token']
+    access_secret_token = ck.keys['access_secret_token']
+
+    # Register the request at the db_request
+    request_param = [datetime.utcnow().isoformat(),
+                     str(args.track[0]),
+                     str(languages[0]),
+                     str(args.locations),
+                     args.minimum_tweet_per_sec[0],
+                     args.time_frame[0],
+                     args.peak_detection_sensibility[0],
+                     args.analysis_sample_size[0],
+                     str(db_name)]
+
+    db_request_obj.insert_into_request_table(request_list=request_param)
+
+    # 3. Initialize twitter_flow
     flow_params = [consumer_key,
                    consumer_secret_key,
                    access_token,
@@ -98,13 +120,12 @@ def main():
     analyzer_process = mp.Process(target=twitter_analyser.start_analyzer, args=analyser_params)
     analyzer_process.start()
 
-    #flask_app = mp.Process(target=flask_app.start_analyzer, args=analyser_params)
-    #flask_app.start()
-    #flask_app.join()
+    flask_process = mp.Process(target=flask_app.set_flask)
+    flask_process.start()
 
+    flask_process.join()
     flow_process.join()
     analyzer_process.join()
-
 
 if __name__ == '__main__':
     # Test_config = --track "trump, obama"
@@ -112,5 +133,6 @@ if __name__ == '__main__':
     #               --sensibility 0.98
     #               --time_frame "1Min"
     #               --min_tweets_sec 0.1
+    #               --analysis_sample_size 10
 
     main()

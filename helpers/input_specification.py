@@ -21,7 +21,6 @@ def location_coord(s):
     except:
         raise argparse.ArgumentTypeError("Coordinates must be sw_lon, sw_lat, ne_lon, ne_lat")
 
-
 def track_list(s):
     """
     Handle topic list
@@ -35,7 +34,6 @@ def track_list(s):
         return s_list
     except:
         raise argparse.ArgumentTypeError("Tracks must be a string of tags separated by comma")
-
 
 def set_sensibility(s):
     """
@@ -54,7 +52,6 @@ def set_sensibility(s):
     except:
         raise argparse.ArgumentTypeError("Sensibility must be a number between 0 and 1")
 
-
 def set_min_tweet_per_sec(s):
     """
     Handle tweets per second values
@@ -68,7 +65,6 @@ def set_min_tweet_per_sec(s):
         return tweets_per_sec
     except:
         raise argparse.ArgumentTypeError("Tweets per second must be a number")
-
 
 def set_time_frame(s):
     """
@@ -89,33 +85,16 @@ def set_time_frame(s):
         match = re.match(r"([0-9]+)([a-z]+)", s, re.I)
         items = match.groups()
 
-        # @TODO: finish errors handlers
-        if len(items) != 2:
-            raise
-                #argparse.ArgumentTypeError(
-                #"""Input must contain a positive integer and the time unity. Ex: 30s, 5min or 1hour""")
-        else:
-            if items[0].isdigit():
-                if items[1].lower() in frames:
-                    return s.lower()
-                else:
-                    """time unity is not correctly specified"""
-                    raise
-                        #argparse.ArgumentTypeError(
-                        #"""Time unity must be one of those options: s, min or hour""")
+        if items[0].isdigit():
+            if items[1].lower() in frames:
+                return s.lower()
             else:
-                """first item is not a digit"""
-                raise
-                    #argparse.ArgumentTypeError(
-                    #"""The number should be a positive integer""")
-
-        # items(1) should be one of those values ['s', 'min', 'hour']
-        # Must contain one of those values for the time frame
+                raise argparse.ArgumentTypeError(
+                    """time unit must be one of those options: s, min or hour""")
 
     except:
         raise argparse.ArgumentTypeError(
              """Input must contain a positive integer and the time unity. Ex: 30s, 5min or 1hour""")
-
 
 def set_sample_size(s):
     """

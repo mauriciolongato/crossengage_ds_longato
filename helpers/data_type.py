@@ -6,7 +6,6 @@ def set_datetime_format(tweet_created_at):
     format = '%a %b %d %H:%M:%S %z %Y'
     return datetime.datetime.strptime(tweet_created_at, format)
 
-
 def time_frame_seconds(time_frame):
     """
     Receives time_frame in the format "[num][unit]" and returns the time in seconds
@@ -20,7 +19,6 @@ def time_frame_seconds(time_frame):
     items = match.groups()
 
     return int(items[0]) * frames[items[1]]
-
 
 def twitter_analyser_periodicity(time_frame, periodicity):
     """

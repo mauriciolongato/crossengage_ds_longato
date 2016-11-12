@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import logging
 
+import configkeys as ck
 from helpers.DbFunctions import DbFunctions
 from helpers.data_type import set_datetime_format
 
@@ -67,7 +68,7 @@ class StdoutListener(StreamListener):
             return True
 
         except Exception:
-            logger.exception("fail to handle tweet: {}".format(data))
+            logger.exception("message")
 
 
     def on_error(self, status):
@@ -100,15 +101,16 @@ def start_flow(consumer_key, consumer_secret_key,
 if __name__ == '__main__':
     # set Twitter access
     logger.info('Setting keys')
-    consumer_key = 'VJNTaFy9k8wOhvLMCNMrdrJ5b'
-    consumer_secret_key = 'TlyJ8hObmwTxXrbOmg0qXI0AO65FgwpDPuiw1lXJtLjuirThEF'
-    access_token = '780782501551747072-NGmaIuimHtagKga83PQjk575MSg2Mfq'
-    access_secret_token = 'Zi6ma6rHNPjm915qQvhwy4UjTw0c4CbQHKeVSsL7gjpuM'
 
-    name ='banco_teste'
+    # Get twitter keys
+    consumer_key = ck.keys["consumer_key"]
+    consumer_secret_key = ck.keys['consumer_secret_key']
+    access_token = ck.keys['access_token']
+    access_secret_token = ck.keys['access_secret_token']
+
+    name ='./example_db/teste_set'
     db_obj = DbFunctions(name)
     db_obj.set_tables()
 
     locations = [(-79.762418, 40.477408, -71.778137, 45.010840)]
-    # @TODO: parameter data_base unfilled
-    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, [['trump']], locations, db_obj)
+    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, [['trump', 'obama']], locations, db_obj)
