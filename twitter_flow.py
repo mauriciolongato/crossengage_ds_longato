@@ -108,9 +108,10 @@ if __name__ == '__main__':
     access_token = ck.keys['access_token']
     access_secret_token = ck.keys['access_secret_token']
 
-    name ='./example_db/teste_set'
+    name = './example_db/teste_set'
     db_obj = DbFunctions(name)
     db_obj.set_tables()
 
     locations = [(-79.762418, 40.477408, -71.778137, 45.010840)]
-    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token, [['trump', 'obama']], locations, db_obj)
+    start_flow(consumer_key, consumer_secret_key, access_token, access_secret_token,
+               [['trump', 'obama']], locations, db_obj)

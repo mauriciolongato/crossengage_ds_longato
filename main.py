@@ -1,3 +1,4 @@
+import os
 import argparse
 import multiprocessing as mp
 import uuid
@@ -8,12 +9,14 @@ import twitter_analyser
 import twitter_flow
 import flask_app
 from helpers import DbFunctions
-from helpers.input_specification import location_coord, track_list, set_sensibility, set_min_tweet_per_sec, set_time_frame, set_sample_size
+from helpers.input_specification import location_coord, track_list, set_sensibility, set_min_tweet_per_sec, \
+    set_time_frame, set_sample_size
 
 
-def main():
+def main_starter():
     """
     Initialize processes:
+        0. Set directories
         1. Create DB
         2. Handle parameters
         3. Initialize twitter_flow
@@ -23,19 +26,27 @@ def main():
     The periodicity of twitter_analyser is a multiple of time_frame
 
     """
+    # Set directories
+    directories = ["./requests_databases",
+                   "./log",
+                   "./peak_data_history",
+                   "./static"]
+
+    for directory in directories:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
     # 1. Create DB
     # DB for tweets
-    db_name = uuid.uuid1()
-    db_obj = DbFunctions.DbFunctions(db_name)
+    db_name = str(uuid.uuid1())
+    db_obj = DbFunctions.DbFunctions("./requests_databases/" + db_name)
     db_obj.set_tables()
 
     # DB that manages request
     db_request_obj = DbFunctions.DbRequests()
     db_request_obj.set_requests_table()
 
-
-    # 2. Handle parameters
+    # 2.Handle parameters
     parser = argparse.ArgumentParser(description='Run peak detector.')
 
     parser.add_argument('--track',
@@ -77,7 +88,7 @@ def main():
     args = parser.parse_args()
 
     # Set language
-    languages=[['en']]
+    languages = [['en']]
 
     # Set twitter keys
     consumer_key = ck.keys["consumer_key"]
@@ -94,7 +105,7 @@ def main():
                      args.time_frame[0],
                      args.peak_detection_sensibility[0],
                      args.analysis_sample_size[0],
-                     str(db_name)]
+                     str(db_obj.name)]
 
     db_request_obj.insert_into_request_table(request_list=request_param)
 
@@ -108,11 +119,11 @@ def main():
                    args.locations,
                    db_obj]
 
-    analyser_params =[args.peak_detection_sensibility,
-                      args.minimum_tweet_per_sec,
-                      args.time_frame,
-                      args.analysis_sample_size,
-                      db_obj]
+    analyser_params = [args.peak_detection_sensibility,
+                       args.minimum_tweet_per_sec,
+                       args.time_frame,
+                       args.analysis_sample_size,
+                       db_obj]
 
     flow_process = mp.Process(target=twitter_flow.start_flow, args=flow_params)
     flow_process.start()
@@ -123,9 +134,10 @@ def main():
     flask_process = mp.Process(target=flask_app.set_flask)
     flask_process.start()
 
-    flask_process.join()
     flow_process.join()
-    analyzer_process.join()
+    # analyzer_process.join()
+    # flask_process.join()
+
 
 if __name__ == '__main__':
     # Test_config = --track "trump, obama"
@@ -135,4 +147,4 @@ if __name__ == '__main__':
     #               --min_tweets_sec 0.1
     #               --analysis_sample_size 10
 
-    main()
+    main_starter()

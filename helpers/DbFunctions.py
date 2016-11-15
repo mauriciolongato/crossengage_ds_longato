@@ -195,7 +195,7 @@ class DbRequests:
                 logger.exception("fail to insert peak data: {}".format(request_list))
 
     def get_last_execution(self):
-        query = "select db_tweets_name from requests order by 1 desc limit 1;"
+        query = "select db_tweets_name from requests order by request_id desc limit 1;"
         with sql.connect('./{}.db'.format(self.name)) as conn:
             proc_data = conn.execute(query)
             name = proc_data.fetchall()
