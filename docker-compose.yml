@@ -1,0 +1,10 @@
+crossengage:
+  build: .
+  restart: always
+  volumes:
+    - ./peak_data_history:/app/peak_data_history
+    - ./static:/app/static
+    - ./requests_databases:/app/requests_databases
+    - ./log:/app/log
+  ports:
+    - "8080:5010"

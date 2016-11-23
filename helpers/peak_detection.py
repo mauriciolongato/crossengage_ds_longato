@@ -2,6 +2,8 @@ import logging
 import pandas as pd
 import scipy.stats
 import csv
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # Set log config
@@ -47,15 +49,16 @@ def create_plot(frequencies, file_name, peak_time, hashtag):
 
         width = 0.4
 
+        fig.tight_layout()
+
+        plt.title(peak_time + " - " + hashtag)
         frequencies["count"].plot(kind='bar', color='navy', ax=ax, width=width)
         frequencies["probability"].plot(marker='o', color='orange', linewidth=2.0, ax=ax2)
 
         ax.set_ylabel("#tweets/time_frame")
         ax2.set_ylabel("1 - Acc. P(#quantity)")
-        fig.tight_layout()
 
-        plt.title(peak_time + " - " + hashtag)
-        plt.savefig(file_name + '.jpeg')
+        plt.savefig(file_name + '.png')
 
         fig.clf()
         plt.close()

@@ -5,6 +5,7 @@ from helpers import DbFunctions
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def latest_peak():
 
@@ -25,7 +26,7 @@ def latest_peak():
 
         # Get plot info
         db_name = tweets_db_name.split("/")[2]
-        img_name = db_name+"_"+data["peak_datetime"] + data["hashtag"]+".jpeg"
+        img_name = db_name+"_"+data["peak_datetime"] + data["hashtag"]+".png"
         data["img_url"] = img_name
 
     except Exception as e:
@@ -43,7 +44,7 @@ def set_flask():
     """
     app.run(host='0.0.0.0',
             port=5010,
-            debug=True)
+            debug=False)
 
 
 if __name__ == "__main__":

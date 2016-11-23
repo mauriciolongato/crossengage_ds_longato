@@ -135,8 +135,8 @@ def main_starter():
     flask_process.start()
 
     flow_process.join()
-    # analyzer_process.join()
-    # flask_process.join()
+    analyzer_process.join()
+    flask_process.join()
 
 
 if __name__ == '__main__':
