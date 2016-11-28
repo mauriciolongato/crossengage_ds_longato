@@ -96,11 +96,15 @@ def main_starter():
     access_token = ck.keys['access_token']
     access_secret_token = ck.keys['access_secret_token']
 
+    # location is not an obligatory parameter:
+    if args.locations == None:
+        args.locations = [None]
+
     # Register the request at the db_request
     request_param = [datetime.utcnow().isoformat(),
                      str(args.track[0]),
                      str(languages[0]),
-                     str(args.locations),
+                     str(args.locations[0]),
                      args.minimum_tweet_per_sec[0],
                      args.time_frame[0],
                      args.peak_detection_sensibility[0],
@@ -114,9 +118,9 @@ def main_starter():
                    consumer_secret_key,
                    access_token,
                    access_secret_token,
-                   languages,
-                   args.track,
-                   args.locations,
+                   languages[0],
+                   args.track[0],
+                   args.locations[0],
                    db_obj]
 
     analyser_params = [args.peak_detection_sensibility,

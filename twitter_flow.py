@@ -80,6 +80,7 @@ def start_flow(consumer_key, consumer_secret_key,
                languages, track, locations, data_base):
     """
     Interface between defining parameter (main.py) and instantiate StdoutListener class
+
     """
 
     logger.info('Initializing listener')
@@ -93,9 +94,9 @@ def start_flow(consumer_key, consumer_secret_key,
     # Start data stream
     logger.info('Beginning streaming')
     stream = Stream(auth, l)
-    stream.filter(track=track[0],
-                  languages=languages[0],
-                  locations=locations[0])
+    stream.filter(track=track,
+                  languages=languages,
+                  locations=locations)
 
 
 if __name__ == '__main__':
