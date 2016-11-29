@@ -40,7 +40,7 @@ summary of the project flow:
 4. In order to stop the execution
     a. docker-compose stop (It will gracefully stop container)
 
-# Parameter throgh command-line and checking the results:
+# Parameter through command-line and checking the results:
 
 1. After the comand docker-compose up -d, the aplication is already running using a test paramenter in order to test. 
 So how do I pass the parameter through command line? 
