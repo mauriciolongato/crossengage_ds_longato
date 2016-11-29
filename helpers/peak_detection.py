@@ -1,14 +1,10 @@
+import csv
 import logging
 import pandas as pd
 import scipy.stats
-import csv
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
-# Set log config
+from helpers.plot import create_plot
 
-# create logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # create file handler and ser level to debug
@@ -32,41 +28,6 @@ def probability_calc(mu, std, frequency):
     :return: probability of the frequency
     """
     return 1 - scipy.stats.norm(mu, std).cdf(frequency)
-
-
-def create_plot(frequencies, file_name, peak_time, hashtag):
-    """
-    :param frequencies: pandas DataFrame
-    :param file_name: composition of: ./plots + database_name + datetime + hastag
-    :param peak_time: time that the peak has been found (str)
-    :param hashtag: hashtag (str)
-    """
-    try:
-
-        fig = plt.figure()  # Create matplotlib figure
-        ax = fig.add_subplot(111)  # Create matplotlib axes
-        ax2 = ax.twinx()  # Create another axes that shares the same x-axis as ax.
-
-        width = 0.4
-
-        fig.tight_layout()
-
-        plt.title(peak_time + " - " + hashtag)
-        frequencies["count"].plot(kind='bar', color='navy', ax=ax, width=width)
-        frequencies["probability"].plot(marker='o', color='orange', linewidth=2.0, ax=ax2)
-
-        ax.set_ylabel("#tweets/time_frame")
-        ax2.set_ylabel("1 - Acc. P(#quantity)")
-
-        plt.savefig(file_name + '.png')
-
-        fig.clf()
-        plt.close()
-
-    except Exception:
-
-        logger.exception("message")
-        logger.info("Not able to create plot from the file {}".format(file_name))
 
 
 def peak_detection(hashtag, count_series, time_window, time_frame,
